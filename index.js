@@ -9,8 +9,9 @@ app.use(express.json());
 app.use(cors());
 
 const usersRoute = require("./routes/users");
-
+const restaurantsRoute = require("./routes/restaurants");
 app.use(usersRoute);
+app.use(restaurantsRoute);
 
 app.all("*", (req, res) => {
   res.status(404).json({ error: "Not Found" });
