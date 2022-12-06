@@ -1,10 +1,23 @@
 const express = require("express");
 const router = express.Router();
+const fileUpload = require("express-fileupload");
+const cloudinary = require("cloudinary").v2;
 
 const User = require("../models/User");
+const isAuthenticated = require("../middlewares/isAuthenticated");
+
 const SHA256 = require("crypto-js/sha256");
 const encBase64 = require("crypto-js/enc-base64");
 const uid2 = require("uid2");
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+const convertToBase64 = (file) => {
+  return `data:${file.mimetype};base64,${file.data.toString("base64")}`;
+};
 
 router.post("/user/signup", async (req, res) => {
   try {
@@ -53,6 +66,30 @@ router.post("/user/login", async (req, res) => {
     }
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.post("/user/upload", isAuthenticated, fileUpload(), async (req, res) => {
+  try {
+    const pictureToUpload = req.files.picture;
+    const result = await cloudinary.uploader.upload(
+      convertToBase64(pictureToUpload)
+    );
+    req.user.account.avatar = result;
+    await req.user.save();
+    res.json({ message: "File Uploaded Successfully" });
+  } catch (error) {
+    return res.json({ error: error.message });
+  }
+});
+
+router.get("/users", async (req, res) => {
+  try {
+    const user = await User.find().select("account");
+    console.log(user);
+    res.json(user);
+  } catch (error) {
+    return res.json({ error: error.message });
   }
 });
 
