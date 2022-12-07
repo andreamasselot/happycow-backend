@@ -7,7 +7,7 @@ router.get("/restaurants", async (req, res) => {
   try {
     const restaurants = await Restaurant.find({
       name: new RegExp(req.query.name, "i"),
-    });
+    }).limit(150);
 
     res.json(restaurants);
   } catch (error) {
